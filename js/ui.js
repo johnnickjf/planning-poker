@@ -26,8 +26,9 @@ const DURACAO_DARDO_MS = 5000;    // quanto tempo o dardo fica cravado
 const MAX_RESIDUOS_POR_CARTA = 6;
 const DURACAO_CONFETE_MS = 2800;
 const DURACAO_TOAST_MS = 2600;
+const DURACAO_PISCAR_SOM_MS = 3200;  // quanto tempo o botão de som pisca após um som silenciado
 const ATRASO_VIRADA_MS = 70;      // atraso escalonado entre cartas ao revelar
-const CORES_CONFETE = ['#60a5fa', '#34d399', '#facc15', '#f472b6', '#a78bfa', '#fb923c'];
+const CORES_CONFETE = ['#00ffa3', '#6bffcb', '#ffb86c', '#e8eaed', '#ff8fab', '#7dd3fc'];
 
 const $ = (id) => document.getElementById(id);
 const movimentoReduzido = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -44,6 +45,8 @@ let confettiToken = 0;
 const playerEls = new Map();   // seatId → referências dos elementos do jogador
 const activeAnims = new Set();
 let meusArremessos = [];       // aviso local de rate limit
+let piscarSomTimer = null;
+let dicaSomMostrada = false;
 
 /** Cria um elemento com propriedades seguras. Filhos string viram nós de texto. */
 function el(tag, props = {}, ...filhos) {
@@ -86,12 +89,20 @@ export function init(h) {
     sound.setMuted(!sound.isMuted());
     updateSoundUI();
   });
+  // Som tocou com o áudio mudo: o botão pisca indicando que dá pra ativar
+  sound.onSomSilenciado(piscarBotaoSom);
   $('volume').addEventListener('input', (e) => {
     const v = Number(e.target.value) / 100;
     sound.setVolume(v);
     if (sound.isMuted() && v > 0) sound.setMuted(false);
     updateSoundUI();
   });
+
+  // Landing: botões que rolam até uma seção (sem mexer no hash, que é usado pelo roteamento)
+  for (const b of document.querySelectorAll('[data-scroll]')) {
+    b.addEventListener('click', () => $(b.dataset.scroll)?.scrollIntoView({ behavior: movimentoReduzido() ? 'auto' : 'smooth', block: 'start' }));
+  }
+  observarRevelacoes();
 
   buildDeck();
   buildThrowMenu();
@@ -103,15 +114,39 @@ export function init(h) {
 // Telas
 // ============================================================================
 
-const TELAS = ['loading', 'home', 'join', 'message', 'room'];
+const TELAS = ['loading', 'landing', 'home', 'join', 'message', 'room'];
 
 function showScreen(nome) {
   closeThrowMenu();
+  const mudou = $(`screen-${nome}`).hidden;
   for (const t of TELAS) $(`screen-${t}`).hidden = t !== nome;
+  if (mudou) window.scrollTo(0, 0);
   if (nome !== 'room') {
-    document.title = 'Planning Poker';
+    document.title = nome === 'landing' ? 'Planning Poker — estimativas em equipe, sem enrolação' : 'Planning Poker';
     setBanner(null);
   }
+}
+
+/** Homepage do projeto. */
+export function showLanding() {
+  showScreen('landing');
+}
+
+/** Elementos .reveal aparecem suavemente quando entram na tela. */
+function observarRevelacoes() {
+  const alvos = document.querySelectorAll('.reveal');
+  if (!('IntersectionObserver' in window) || movimentoReduzido()) {
+    alvos.forEach((a) => a.classList.add('is-visible'));
+    return;
+  }
+  const obs = new IntersectionObserver((entradas) => {
+    for (const e of entradas) {
+      if (!e.isIntersecting) continue;
+      e.target.classList.add('is-visible');
+      obs.unobserve(e.target);
+    }
+  }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+  alvos.forEach((a) => obs.observe(a));
 }
 
 export function showLoading(texto) {
@@ -869,8 +904,27 @@ async function copyLink(btn) {
   }, 2000);
 }
 
+function piscarBotaoSom() {
+  if ($('screen-room').hidden || document.hidden) return;
+  const btn = $('btn-sound');
+  // Reinicia a animação se já estiver piscando
+  btn.classList.remove('is-nudging');
+  void btn.offsetWidth;
+  btn.classList.add('is-nudging');
+  clearTimeout(piscarSomTimer);
+  piscarSomTimer = setTimeout(() => btn.classList.remove('is-nudging'), DURACAO_PISCAR_SOM_MS);
+  if (!dicaSomMostrada) {
+    dicaSomMostrada = true;
+    toast('Rolou um efeito sonoro! Ative o som no 🔇 lá em cima.');
+  }
+}
+
 function updateSoundUI() {
   const mudo = sound.isMuted();
+  if (!mudo) {
+    clearTimeout(piscarSomTimer);
+    $('btn-sound').classList.remove('is-nudging');
+  }
   const btn = $('btn-sound');
   btn.setAttribute('aria-pressed', String(mudo));
   btn.setAttribute('aria-label', mudo ? 'Ativar som' : 'Desativar som');

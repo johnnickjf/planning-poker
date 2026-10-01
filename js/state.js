@@ -43,7 +43,7 @@ export const ITENS_ARREMESSO = [
   { id: 'egg', emoji: '🥚', rotulo: 'Ovo', impacto: 'mancha', giro: 540, som: 'egg', somNo: 'impacto' },
   { id: 'heart', emoji: '❤️', rotulo: 'Coração', impacto: 'explode', giro: 0, som: 'heart', somNo: 'impacto' },
   { id: 'dart', emoji: '🎯', rotulo: 'Dardo', impacto: 'crava', giro: 0, duracao: 450, som: 'dart', somNo: 'impacto' },
-  { id: 'emoji', emoji: '😀', rotulo: 'Emoji', impacto: 'quica', giro: 360, som: null, somNo: 'impacto', livre: true },
+  { id: 'emoji', emoji: '😀', rotulo: 'Emoji', impacto: 'quica', giro: 360, som: 'emoji', somNo: 'impacto', livre: true },
 ];
 
 /** Emojis rápidos do seletor (item "emoji"). */

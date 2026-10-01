@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Planning Poker</title>
-  <meta name="description" content="Planning Poker em tempo real, sem login. Crie uma sala e compartilhe o link com o time.">
-  <meta name="theme-color" content="#020617">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🃏%3C/text%3E%3C/svg%3E">
+  <title>Planning Poker — estimativas em equipe, sem enrolação</title>
+  <meta name="description" content="Planning poker open source e gratuito. Crie uma sala, mande o link e estime tarefas com o seu time em tempo real, sem cadastro.">
+  <meta name="theme-color" content="#0a0b0d">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='18' y='6' width='64' height='88' rx='12' fill='%2300ffa3'/%3E%3Ctext x='50' y='64' font-size='40' text-anchor='middle' font-family='monospace' font-weight='700' fill='%2305120c'%3E8%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -18,21 +18,181 @@
   <!-- ===================== Carregando ===================== -->
   <main id="screen-loading" class="screen screen-center">
     <div class="spinner" aria-hidden="true"></div>
-    <p id="loading-text" class="muted" role="status">Carregando…</p>
+    <p id="loading-text" class="muted mono" role="status">Carregando…</p>
   </main>
 
-  <!-- ===================== Home ===================== -->
-  <main id="screen-home" class="screen screen-center" hidden>
-    <header class="brand">
-      <div class="brand-logo" aria-hidden="true">
-        <span class="mini-card">5</span><span class="mini-card">8</span>
+  <!-- ===================== Landing (homepage) ===================== -->
+  <div id="screen-landing" class="screen landing" hidden>
+    <header class="nav">
+      <a class="wordmark" href="#" aria-label="Planning Poker, início">planning poker<span class="dot">.</span></a>
+      <nav class="nav-links" aria-label="Seções">
+        <button type="button" class="nav-link" data-scroll="sobre">Pra que serve</button>
+        <button type="button" class="nav-link" data-scroll="como-funciona">Como funciona</button>
+        <button type="button" class="nav-link" data-scroll="recursos">Recursos</button>
+      </nav>
+      <a class="btn btn-primary btn-sm" href="#criar">Criar minha sala</a>
+    </header>
+
+    <main>
+      <!-- Hero -->
+      <section class="container hero">
+        <div class="hero-copy">
+          <p class="chip"><span class="chip-dot" aria-hidden="true"></span>// open source · grátis · sem cadastro</p>
+          <h1 class="hero-title">Estimativas em equipe, <em>sem enrolação.</em></h1>
+          <p class="hero-sub">
+            Um planning poker <strong>open source</strong> pra times que querem estimar tarefas rápido:
+            sem planilha, sem login e sem aquela reunião que nunca acaba.
+            Crie uma sala, mande o link e pronto.
+          </p>
+          <div class="hero-ctas">
+            <a class="btn btn-primary btn-xl" href="#criar">Criar minha sala <span aria-hidden="true">→</span></a>
+            <button type="button" class="btn btn-ghost btn-xl" data-scroll="como-funciona">Como funciona <span aria-hidden="true">↓</span></button>
+          </div>
+        </div>
+
+        <div class="fan" aria-hidden="true">
+          <div class="fan-card back" style="--r:-24;--x:-118"></div>
+          <div class="fan-card back" style="--r:-12;--x:-60"></div>
+          <div class="fan-card front" style="--r:12;--x:60">5</div>
+          <div class="fan-card front" style="--r:24;--x:118">13</div>
+          <div class="fan-card front hot" style="--r:0;--x:0">8</div>
+          <span class="fan-emoji fan-egg">🥚</span>
+          <span class="fan-emoji fan-plane">✈️</span>
+          <span class="fan-emoji fan-coffee">☕</span>
+          <p class="fan-tag"><span class="chip-dot"></span>votos revelados · média 8</p>
+        </div>
+      </section>
+
+      <!-- Números -->
+      <section class="container strip reveal" aria-label="Em números">
+        <div class="strip-item"><p class="strip-num">0</p><p class="strip-label">cadastros necessários</p></div>
+        <div class="strip-item"><p class="strip-num">10</p><p class="strip-label">pessoas por sala</p></div>
+        <div class="strip-item"><p class="strip-num">13</p><p class="strip-label">cartas no baralho</p></div>
+        <div class="strip-item"><p class="strip-num">∞<span>+</span></p><p class="strip-label">ovos arremessáveis</p></div>
+      </section>
+
+      <!-- Pra que serve -->
+      <section id="sobre" class="container section split">
+        <div class="reveal">
+          <p class="eyebrow">// pra que serve</p>
+          <h2 class="section-title">Todo mundo vota. Ninguém é influenciado.</h2>
+          <p class="lead">
+            Planning poker é um jeito simples de estimar o esforço das tarefas em equipe.
+            Cada pessoa escolhe uma carta em segredo, todo mundo revela ao mesmo tempo
+            e o time conversa sobre as diferenças.
+          </p>
+          <p class="lead">
+            Assim a opinião de quem fala primeiro (ou mais alto) não contamina a dos outros,
+            e as estimativas saem mais honestas. Dá pra usar em sprints, refinamentos
+            ou em qualquer momento em que o time precise chegar num número junto.
+          </p>
+        </div>
+
+        <div class="demo reveal" aria-hidden="true">
+          <p class="demo-label">// a mesa depois da revelação</p>
+          <div class="demo-cards">
+            <div class="demo-player"><span class="demo-card low">3</span><span>Ana</span></div>
+            <div class="demo-player"><span class="demo-card">5</span><span>Caio</span></div>
+            <div class="demo-player"><span class="demo-card">5</span><span>Bia</span></div>
+            <div class="demo-player"><span class="demo-card high">13</span><span>Léo</span></div>
+          </div>
+          <p class="demo-comment"><span>→</span> o 3 e o 13 explicam o porquê.<br><span>→</span> o time decide junto.</p>
+        </div>
+      </section>
+
+      <!-- Como funciona -->
+      <section id="como-funciona" class="container section">
+        <div class="section-head reveal">
+          <p class="eyebrow">// como funciona</p>
+          <h2 class="section-title">Três passos. Uns dez segundos.</h2>
+        </div>
+        <ol class="steps">
+          <li class="step reveal">
+            <span class="step-num">01</span>
+            <h3>Crie a sala</h3>
+            <p>Dê um nome pra sala e diga como o time te chama. Só isso.</p>
+          </li>
+          <li class="step reveal">
+            <span class="step-num">02</span>
+            <h3>Compartilhe o link</h3>
+            <p>Mande no chat do time. Quem abrir só digita o nome e já senta na mesa.</p>
+          </li>
+          <li class="step reveal">
+            <span class="step-num">03</span>
+            <h3>Vote e revele</h3>
+            <p>Cada um escolhe sua carta em segredo. Revelou? Aparecem média, mediana e quem pensou diferente.</p>
+          </li>
+        </ol>
+      </section>
+
+      <!-- Recursos -->
+      <section id="recursos" class="container section">
+        <div class="section-head reveal">
+          <p class="eyebrow">// recursos</p>
+          <h2 class="section-title">O essencial, e um pouco de bagunça.</h2>
+        </div>
+        <ul class="features">
+          <li class="feature reveal">
+            <span class="feature-icon" aria-hidden="true">🙈</span>
+            <h3>Votos secretos de verdade</h3>
+            <p>Ninguém vê o voto de ninguém antes da revelação. Nem espiando.</p>
+          </li>
+          <li class="feature reveal">
+            <span class="feature-icon" aria-hidden="true">📊</span>
+            <h3>Resultado na hora</h3>
+            <p>Média, mediana, moda e os extremos destacados pra puxar a conversa.</p>
+          </li>
+          <li class="feature reveal">
+            <span class="feature-icon" aria-hidden="true">🎉</span>
+            <h3>Consenso comemorado</h3>
+            <p>Todo mundo votou igual? Tem confete. Vocês merecem.</p>
+          </li>
+          <li class="feature reveal">
+            <span class="feature-icon" aria-hidden="true">🥚</span>
+            <h3>Arremesse coisas</h3>
+            <p>Ovo, aviãozinho, dardo, coração… pra animar (ou acordar) aquele colega.</p>
+          </li>
+          <li class="feature reveal">
+            <span class="feature-icon" aria-hidden="true">🔓</span>
+            <h3>Open source e grátis</h3>
+            <p>Sem plano pago, sem anúncio, sem pegadinha. O código é aberto pra todo mundo.</p>
+          </li>
+          <li class="feature reveal">
+            <span class="feature-icon" aria-hidden="true">👻</span>
+            <h3>Nada fica guardado</h3>
+            <p>Sem conta e sem histórico. Fechou a sala, acabou.</p>
+          </li>
+        </ul>
+      </section>
+
+      <!-- CTA final -->
+      <section class="container section">
+        <div class="cta reveal">
+          <p class="eyebrow">// bora?</p>
+          <h2 class="cta-title">Sua próxima planning começa em 10 segundos.</h2>
+          <a class="btn btn-primary btn-xl" href="#criar">Criar minha sala <span aria-hidden="true">→</span></a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer-inner">
+        <p><span class="wordmark wordmark-sm">planning poker<span class="dot">.</span></span> <span class="muted">Projeto open source, feito pra times.</span></p>
+        <p class="footer-credit">Criado por <a href="https://links.johnnick.com.br/" target="_blank" rel="noopener">Johnnick Landim</a></p>
       </div>
-      <h1 class="brand-title">Planning Poker</h1>
-      <p class="brand-tagline">Estimativas em tempo real com o seu time. Sem login, sem cadastro: crie a sala e compartilhe o link.</p>
+    </footer>
+  </div>
+
+  <!-- ===================== Criar sala ===================== -->
+  <main id="screen-home" class="screen screen-center" hidden>
+    <a class="back-link" href="#"><span aria-hidden="true">←</span> voltar</a>
+    <header class="brand">
+      <p class="eyebrow">// nova sala</p>
+      <h1 class="brand-title">Criar minha sala</h1>
+      <p class="brand-tagline">Dois campos e você já está na mesa. Depois é só mandar o link pro time.</p>
     </header>
 
     <form id="form-create" class="panel" novalidate>
-      <h2 class="panel-title">Criar sala</h2>
       <div class="field">
         <label for="create-name">Seu nome</label>
         <input id="create-name" name="name" type="text" autocomplete="nickname" required
@@ -45,25 +205,26 @@
                placeholder="Ex.: Sprint 42 · Time Phoenix" aria-describedby="create-room-error">
         <p id="create-room-error" class="field-error" aria-live="polite"></p>
       </div>
-      <button type="submit" class="btn btn-primary btn-lg" data-label="Criar sala" data-busy="Criando…">Criar sala</button>
+      <button type="submit" class="btn btn-primary btn-lg" data-label="Criar sala →" data-busy="Criando…">Criar sala →</button>
     </form>
 
-    <p class="footnote">Até 10 pessoas por sala · Conexão direta entre navegadores (P2P)</p>
+    <p class="footnote mono">// até 10 pessoas por sala · nada fica salvo</p>
   </main>
 
   <!-- ===================== Entrar na sala ===================== -->
   <main id="screen-join" class="screen screen-center" hidden>
+    <a class="back-link" href="#"><span aria-hidden="true">←</span> início</a>
     <form id="form-join" class="panel" novalidate>
-      <p class="eyebrow">Você foi convidado(a)</p>
+      <p class="eyebrow">// você foi convidado(a)</p>
       <h1 class="panel-title">Entrar na sala <span id="join-room-name" class="accent"></span></h1>
-      <p id="join-count" class="muted small"></p>
+      <p id="join-count" class="muted small mono"></p>
       <div class="field">
         <label for="join-name">Seu nome</label>
         <input id="join-name" name="name" type="text" autocomplete="nickname" required
                placeholder="Como o time te chama?" aria-describedby="join-name-error">
         <p id="join-name-error" class="field-error" aria-live="polite"></p>
       </div>
-      <button type="submit" class="btn btn-primary btn-lg" data-label="Entrar na sala" data-busy="Entrando…">Entrar na sala</button>
+      <button type="submit" class="btn btn-primary btn-lg" data-label="Sentar na mesa →" data-busy="Entrando…">Sentar na mesa →</button>
     </form>
   </main>
 
@@ -81,7 +242,7 @@
   <div id="screen-room" class="screen room" hidden>
     <header class="room-header">
       <div class="room-title">
-        <span class="room-logo" aria-hidden="true">🃏</span>
+        <span class="wordmark wordmark-sm room-logo" aria-hidden="true">pp<span class="dot">.</span></span>
         <h1 id="room-name"></h1>
         <span id="room-count" class="pill"></span>
       </div>
@@ -135,7 +296,7 @@
       <button id="throw-close" type="button" class="btn btn-ghost btn-icon btn-xs" aria-label="Fechar">✕</button>
     </div>
     <div id="throw-items" class="throw-grid"></div>
-    <p class="throw-sub">Emojis</p>
+    <p class="throw-sub">// emojis</p>
     <div id="throw-emojis" class="emoji-grid"></div>
     <form id="throw-custom" class="custom-emoji" novalidate>
       <input id="custom-emoji" type="text" maxlength="16" autocomplete="off" placeholder="Outro emoji…" aria-label="Emoji livre" aria-describedby="custom-emoji-error">

@@ -3,7 +3,8 @@
  * orquestração entre rede (network.js), interface (ui.js) e som (sound.js).
  *
  * Rotas:
- *   #               → Home (criar sala)
+ *   #               → Homepage (landing)
+ *   #criar          → Criar sala
  *   #sala=ABC123    → Entrar na sala (ou reabrir, se esta aba for o host)
  */
 
@@ -137,7 +138,8 @@ function route() {
   teardown();
 
   if (!roomId) {
-    ui.showHome({ name: lsGet(LS_NOME) || '' });
+    if (location.hash.startsWith('#criar')) ui.showHome({ name: lsGet(LS_NOME) || '' });
+    else ui.showLanding();
     return;
   }
   if (roomId === SALA_INVALIDA) {
@@ -168,6 +170,13 @@ function irParaHome() {
   teardown();
   limparRegistroHost();
   if (location.hash) history.pushState(null, '', location.pathname + location.search);
+  route();
+}
+
+function irParaCriar() {
+  teardown();
+  limparRegistroHost();
+  history.pushState(null, '', '#criar');
   route();
 }
 
@@ -407,7 +416,7 @@ function mostrarNaoEncontrada() {
     title: 'Sala não encontrada ou encerrada',
     text: 'Confira o link ou peça um novo convite. Você também pode criar uma sala nova.',
     actions: [
-      { label: 'Criar nova sala', primary: true, onClick: irParaHome },
+      { label: 'Criar nova sala', primary: true, onClick: irParaCriar },
       { label: 'Tentar novamente', onClick: tentarNovamente },
     ],
   });
@@ -419,7 +428,7 @@ function mostrarSalaCheia() {
     title: 'Sala cheia',
     text: `Esta sala já tem o máximo de ${MAX_JOGADORES} participantes.`,
     actions: [
-      { label: 'Voltar à Home', primary: true, onClick: irParaHome },
+      { label: 'Voltar ao início', primary: true, onClick: irParaHome },
       { label: 'Tentar novamente', onClick: tentarNovamente },
     ],
   });
@@ -430,7 +439,10 @@ function mostrarHostSaiu() {
     icon: '🚪',
     title: 'A sala foi encerrada porque o host saiu',
     text: 'Nada fica salvo: crie uma nova sala para continuar estimando.',
-    actions: [{ label: 'Voltar à Home', primary: true, onClick: irParaHome }],
+    actions: [
+      { label: 'Criar nova sala', primary: true, onClick: irParaCriar },
+      { label: 'Voltar ao início', onClick: irParaHome },
+    ],
   });
 }
 
@@ -441,7 +453,7 @@ function mostrarErro(titulo, err) {
     text: mensagemErro(err),
     actions: [
       { label: 'Tentar novamente', primary: true, onClick: tentarNovamente },
-      { label: 'Voltar à Home', onClick: irParaHome },
+      { label: 'Voltar ao início', onClick: irParaHome },
     ],
   });
 }
