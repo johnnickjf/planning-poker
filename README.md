@@ -71,7 +71,7 @@ jogador inexistente, valor fora do baralho, item desconhecido etc.).
 │   ├── state.js      estado da sala, estatísticas e configurações compartilhadas
 │   ├── ui.js         renderização, baralho, menu e animações de arremesso, confete
 │   └── sound.js      gerenciador de áudio (Web Audio API)
-├── sounds/           seus MP3 (veja a lista abaixo)
+├── sounds/           eventos/, arremessos/ e soundboard/ (veja sounds/README.md)
 └── README.md
 ```
 
@@ -126,22 +126,23 @@ HTTPS para WebRTC; nesse caso teste direto pelo GitHub Pages.
 4. Em **Build and deployment → Source**, escolha **Deploy from a branch**.
 5. Selecione a branch **`main`** e a pasta **`/ (root)`**, depois clique em **Save**.
 6. Aguarde 1 ou 2 minutos. O site fica em `https://SEU-USUARIO.github.io/planning-poker/`.
-7. Adicione seus MP3 em `sounds/` (commit + push) quando quiser.
+7. Para adicionar sons novos depois, veja `sounds/README.md` (commit + push).
 
 Tudo usa caminhos relativos e roteamento por `#`, por isso funciona na subpasta `/planning-poker/`
 sem configuração extra.
 
 ---
 
-## Sons esperados (`sounds/`)
+## Sons (`sounds/`)
 
-`egg.mp3`, `paper.mp3`, `plane.mp3`, `heart.mp3`, `dart.mp3`, `reveal.mp3`, `vote.mp3`,
-`join.mp3`, `newround.mp3`, `consensus.mp3`
+Os áudios ficam em `sounds/eventos/` (automáticos da sala), `sounds/arremessos/` (itens arremessáveis)
+e `sounds/soundboard/` (memes e efeitos). A lista completa e como adicionar novos sons estão em
+[`sounds/README.md`](sounds/README.md).
 
 - Cada navegador toca os sons localmente; pela rede só trafega o evento.
+- Todo mundo começa com o som **mudo**; o botão 🔇 pisca quando algum som tocaria.
 - Os sons só tocam depois da primeira interação com a página (política de autoplay dos navegadores).
-- Arquivo ausente = silêncio. O app não quebra, mas o navegador mostra o `404` na aba Network/Console;
-  isso é esperado enquanto você não adicionar os arquivos.
+- Arquivo ausente = silêncio, sem quebrar o app.
 - Mudo e volume ficam salvos no `localStorage`.
 
 ---

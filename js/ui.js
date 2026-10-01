@@ -611,7 +611,12 @@ function doThrow(item, emoji) {
 
 function buildSoundboard() {
   const grade = $('board-items');
+  let grupoAtual = null;
   for (const som of SOUNDBOARD) {
+    if (som.grupo && som.grupo !== grupoAtual) {
+      grupoAtual = som.grupo;
+      grade.append(el('p', { class: 'board-group', text: `// ${som.grupo.toLowerCase()}` }));
+    }
     grade.append(el('button', {
       type: 'button',
       class: 'throw-item board-item',

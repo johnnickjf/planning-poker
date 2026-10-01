@@ -1225,6 +1225,15 @@ button.pcard { cursor: pointer; }
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
 }
+.board-group {
+  grid-column: 1 / -1;
+  margin: 8px 0 2px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+}
+.board-group:first-child { margin-top: 0; }
+.board-item span:last-child { line-height: 1.2; text-align: center; overflow-wrap: anywhere; }
 .board-item.is-playing {
   border-color: var(--accent);
   color: var(--accent);

@@ -53,32 +53,40 @@ export const EMOJIS_RAPIDOS = ['😂', '😍', '😎', '🤔', '😱', '🥳', '
 export const LIMITE_ARREMESSOS = { max: 5, janelaMs: 5000 };
 
 /**
- * Soundboard: sons que qualquer pessoa toca para a sala inteira.
- * Para adicionar um som, coloque o MP3 em sounds/soundboard/ e inclua uma linha aqui
- * (o `id` precisa ser único; `rotulo` e `emoji` são o que aparece no botão).
+ * Soundboard: sons que qualquer pessoa toca para a sala inteira (máx. 5 s cada).
+ * Para adicionar um som, coloque o MP3 em sounds/soundboard/ e inclua uma linha aqui.
+ * `id` precisa ser único; `rotulo` e `emoji` aparecem no botão; `grupo` define a seção do painel.
  */
 export const SOUNDBOARD = [
-  // Sons que também são usados automaticamente
-  { id: 'sb-consenso', arquivo: 'sounds/consensus.mp3', rotulo: 'Consenso', emoji: '🎉' },
-  { id: 'sb-revelacao', arquivo: 'sounds/reveal.mp3', rotulo: 'Revelação', emoji: '🥁' },
-  { id: 'sb-rodada', arquivo: 'sounds/newround.mp3', rotulo: 'Nova rodada', emoji: '🔄' },
-  { id: 'sb-chegada', arquivo: 'sounds/join.mp3', rotulo: 'Chegada', emoji: '👋' },
-  { id: 'sb-voto', arquivo: 'sounds/vote.mp3', rotulo: 'Voto', emoji: '🗳️' },
-  { id: 'sb-ovo', arquivo: 'sounds/egg.mp3', rotulo: 'Ovo', emoji: '🥚' },
-  { id: 'sb-papel', arquivo: 'sounds/paper.mp3', rotulo: 'Papel', emoji: '📄' },
-  { id: 'sb-aviao', arquivo: 'sounds/plane.mp3', rotulo: 'Avião', emoji: '✈️' },
-  { id: 'sb-coracao', arquivo: 'sounds/heart.mp3', rotulo: 'Coração', emoji: '❤️' },
-  { id: 'sb-dardo', arquivo: 'sounds/dart.mp3', rotulo: 'Dardo', emoji: '🎯' },
-  { id: 'sb-emoji', arquivo: 'sounds/emoji.mp3', rotulo: 'Emoji', emoji: '😀' },
-  // Sons exclusivos da soundboard
-  { id: 'sb01', arquivo: 'sounds/soundboard/01.mp3', rotulo: 'Som 1', emoji: '🎵' },
-  { id: 'sb02', arquivo: 'sounds/soundboard/02.mp3', rotulo: 'Som 2', emoji: '🎶' },
-  { id: 'sb03', arquivo: 'sounds/soundboard/03.mp3', rotulo: 'Som 3', emoji: '🎺' },
-  { id: 'sb04', arquivo: 'sounds/soundboard/04.mp3', rotulo: 'Som 4', emoji: '💥' },
-  { id: 'sb05', arquivo: 'sounds/soundboard/05.mp3', rotulo: 'Som 5', emoji: '🔔' },
-  { id: 'sb06', arquivo: 'sounds/soundboard/06.mp3', rotulo: 'Som 6', emoji: '📯' },
-  { id: 'sb07', arquivo: 'sounds/soundboard/07.mp3', rotulo: 'Som 7', emoji: '🎸' },
-  { id: 'sb08', arquivo: 'sounds/soundboard/08.mp3', rotulo: 'Som 8', emoji: '🎹' },
+  // Memes
+  { id: 'sb-kiko', arquivo: 'sounds/soundboard/risada-do-kiko.mp3', rotulo: 'Risada do Kiko', emoji: '😂', grupo: 'Memes' },
+  { id: 'sb-aura', arquivo: 'sounds/soundboard/aura.mp3', rotulo: 'Auraaa', emoji: '✨', grupo: 'Memes' },
+  { id: 'sb-sem-aura', arquivo: 'sounds/soundboard/voce-nao-tem-aura.mp3', rotulo: 'Você não tem aura', emoji: '🚫', grupo: 'Memes' },
+  { id: 'sb-pix', arquivo: 'sounds/soundboard/e-o-pix.mp3', rotulo: 'É o Pix', emoji: '💸', grupo: 'Memes' },
+  { id: 'sb-escreve', arquivo: 'sounds/soundboard/escreve-e-apaga.mp3', rotulo: 'Escreve e apaga', emoji: '✍️', grupo: 'Memes' },
+  { id: 'sb-mega-brain', arquivo: 'sounds/soundboard/mega-brain.mp3', rotulo: 'Mega Brain', emoji: '🧠', grupo: 'Memes' },
+  { id: 'sb-saveiro', arquivo: 'sounds/soundboard/saveiro.mp3', rotulo: 'Saveiro', emoji: '🚗', grupo: 'Memes' },
+  // Efeitos
+  { id: 'sb01', arquivo: 'sounds/soundboard/som-01.mp3', rotulo: 'Som 1', emoji: '🎵', grupo: 'Efeitos' },
+  { id: 'sb02', arquivo: 'sounds/soundboard/som-02.mp3', rotulo: 'Som 2', emoji: '🎶', grupo: 'Efeitos' },
+  { id: 'sb03', arquivo: 'sounds/soundboard/som-03.mp3', rotulo: 'Som 3', emoji: '🎺', grupo: 'Efeitos' },
+  { id: 'sb04', arquivo: 'sounds/soundboard/som-04.mp3', rotulo: 'Som 4', emoji: '💥', grupo: 'Efeitos' },
+  { id: 'sb05', arquivo: 'sounds/soundboard/som-05.mp3', rotulo: 'Som 5', emoji: '🔔', grupo: 'Efeitos' },
+  { id: 'sb06', arquivo: 'sounds/soundboard/som-06.mp3', rotulo: 'Som 6', emoji: '📯', grupo: 'Efeitos' },
+  { id: 'sb07', arquivo: 'sounds/soundboard/som-07.mp3', rotulo: 'Som 7', emoji: '🎸', grupo: 'Efeitos' },
+  { id: 'sb08', arquivo: 'sounds/soundboard/som-08.mp3', rotulo: 'Som 8', emoji: '🎹', grupo: 'Efeitos' },
+  // Sons que também tocam automaticamente na sala
+  { id: 'sb-consenso', arquivo: 'sounds/eventos/consenso.mp3', rotulo: 'Consenso', emoji: '🎉', grupo: 'Sons da sala' },
+  { id: 'sb-divergencia', arquivo: 'sounds/eventos/divergencia.mp3', rotulo: 'Todos diferentes', emoji: '🤯', grupo: 'Sons da sala' },
+  { id: 'sb-rodada', arquivo: 'sounds/eventos/nova-rodada.mp3', rotulo: 'Nova rodada', emoji: '🔄', grupo: 'Sons da sala' },
+  { id: 'sb-chegada', arquivo: 'sounds/eventos/entrada.mp3', rotulo: 'Chegada', emoji: '👋', grupo: 'Sons da sala' },
+  { id: 'sb-voto', arquivo: 'sounds/eventos/voto.mp3', rotulo: 'Voto', emoji: '🗳️', grupo: 'Sons da sala' },
+  { id: 'sb-papel', arquivo: 'sounds/arremessos/papel.mp3', rotulo: 'Papel', emoji: '📄', grupo: 'Sons da sala' },
+  { id: 'sb-aviao', arquivo: 'sounds/arremessos/aviao.mp3', rotulo: 'Avião', emoji: '✈️', grupo: 'Sons da sala' },
+  { id: 'sb-ovo', arquivo: 'sounds/arremessos/ovo.mp3', rotulo: 'Ovo', emoji: '🥚', grupo: 'Sons da sala' },
+  { id: 'sb-coracao', arquivo: 'sounds/arremessos/coracao.mp3', rotulo: 'Coração', emoji: '❤️', grupo: 'Sons da sala' },
+  { id: 'sb-dardo', arquivo: 'sounds/arremessos/dardo.mp3', rotulo: 'Dardo', emoji: '🎯', grupo: 'Sons da sala' },
+  { id: 'sb-emoji', arquivo: 'sounds/arremessos/emoji.mp3', rotulo: 'Emoji', emoji: '😀', grupo: 'Sons da sala' },
 ];
 
 /** Rate limit da soundboard (por pessoa). */

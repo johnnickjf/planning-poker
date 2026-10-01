@@ -20,17 +20,17 @@ import { SOUNDBOARD } from './state.js';
 // Para tirar o som de um evento, basta remover a linha.
 // ============================================================================
 export const SONS_AUTOMATICOS = {
-  consensus: 'sounds/consensus.mp3',   // todos os votos iguais
-  divergence: 'sounds/reveal.mp3',     // todos os votos diferentes
-  newround: 'sounds/newround.mp3',     // nova votação
-  join: 'sounds/join.mp3',             // alguém entrou na sala
+  consensus: 'sounds/eventos/consenso.mp3',     // todos os votos iguais
+  divergence: 'sounds/eventos/divergencia.mp3', // todos os votos diferentes
+  newround: 'sounds/eventos/nova-rodada.mp3',   // nova votação
+  join: 'sounds/eventos/entrada.mp3',           // alguém entrou na sala
   // Arremessos (os 6 itens principais)
-  paper: 'sounds/paper.mp3',
-  plane: 'sounds/plane.mp3',
-  egg: 'sounds/egg.mp3',
-  heart: 'sounds/heart.mp3',
-  dart: 'sounds/dart.mp3',
-  emoji: 'sounds/emoji.mp3',
+  paper: 'sounds/arremessos/papel.mp3',
+  plane: 'sounds/arremessos/aviao.mp3',
+  egg: 'sounds/arremessos/ovo.mp3',
+  heart: 'sounds/arremessos/coracao.mp3',
+  dart: 'sounds/arremessos/dardo.mp3',
+  emoji: 'sounds/arremessos/emoji.mp3',
 };
 
 /** Todos os sons conhecidos: automáticos + soundboard (configurada em js/state.js). */
@@ -48,6 +48,8 @@ const FADE_OUT_S = 0.35;
 /** Pico alvo da normalização (0–1) e ganho máximo aplicado a arquivos baixos. */
 const PICO_ALVO = 0.85;
 const GANHO_MAXIMO = 4;
+/** Silêncio inicial é pulado: o som começa no 1º trecho acima deste % do pico. */
+const LIMIAR_SILENCIO = 0.02;
 
 const LS_MUDO = 'pp-som-mudo';
 const LS_VOLUME = 'pp-som-volume';
@@ -81,8 +83,11 @@ export function duracaoMaxima(nome) {
   return IDS_SOUNDBOARD.has(nome) ? DURACAO_MAXIMA.soundboard : DURACAO_MAXIMA.automatico;
 }
 
-/** Ganho que leva o pico do arquivo até PICO_ALVO. */
-export function ganhoDeNormalizacao(buffer) {
+/**
+ * Analisa o arquivo uma vez: ganho que leva o pico até PICO_ALVO e onde o som
+ * realmente começa (pula o silêncio inicial, comum em áudios de meme).
+ */
+export function analisarAudio(buffer) {
   let pico = 0;
   for (let c = 0; c < buffer.numberOfChannels; c++) {
     const dados = buffer.getChannelData(c);
@@ -91,7 +96,19 @@ export function ganhoDeNormalizacao(buffer) {
       if (v > pico) pico = v;
     }
   }
-  return pico > 0 ? Math.min(GANHO_MAXIMO, PICO_ALVO / pico) : 1;
+  let primeiro = buffer.length;
+  if (pico > 0) {
+    const limiar = pico * LIMIAR_SILENCIO;
+    for (let c = 0; c < buffer.numberOfChannels; c++) {
+      const dados = buffer.getChannelData(c);
+      for (let i = 0; i < Math.min(primeiro, dados.length); i++) {
+        if (Math.abs(dados[i]) > limiar) { primeiro = i; break; }
+      }
+    }
+  }
+  // Volta 20 ms para não cortar o ataque do som
+  const inicio = primeiro >= buffer.length ? 0 : Math.max(0, primeiro / buffer.sampleRate - 0.02);
+  return { ganho: pico > 0 ? Math.min(GANHO_MAXIMO, PICO_ALVO / pico) : 1, inicio };
 }
 
 export function init() {
@@ -153,7 +170,7 @@ function decodificarPendentes() {
       const p = ctx.decodeAudioData(buf, resolve, reject);
       if (p && typeof p.then === 'function') p.then(resolve, reject);
     })
-      .then((audio) => buffers.set(url, { buffer: audio, ganho: ganhoDeNormalizacao(audio) }))
+      .then((audio) => buffers.set(url, { buffer: audio, ...analisarAudio(audio) }))
       .catch(() => { disponiveis.delete(url); });
   }
 }
@@ -188,8 +205,8 @@ export function play(nome) {
 
     const agora = ctx.currentTime;
     const max = duracaoMaxima(nome);
-    src.start(agora);
-    if (item.buffer.duration > max) {
+    src.start(agora, item.inicio);
+    if (item.buffer.duration - item.inicio > max) {
       ganho.gain.setValueAtTime(item.ganho, agora + max - FADE_OUT_S);
       ganho.gain.linearRampToValueAtTime(0.0001, agora + max);
       src.stop(agora + max + 0.05);
