@@ -4,35 +4,45 @@
  * - Só o EVENTO viaja pela rede; cada navegador toca o som localmente.
  * - Os arquivos são baixados (pré-carregados) logo no início e decodificados
  *   após a primeira interação do usuário (política de autoplay).
+ *   Cada arquivo é baixado uma única vez, mesmo usado em vários lugares.
  * - Sons podem se sobrepor (cada play cria um BufferSource novo).
- * - O volume de cada arquivo é normalizado e sons longos são cortados com fade-out.
+ * - O volume de cada arquivo é normalizado e sons longos são cortados com fade-out
+ *   (3 s nos automáticos, 5 s na soundboard).
  * - Começa MUDO por padrão. Quando um som "tocaria" com o áudio mudo, avisa
  *   quem se inscreveu em onSomSilenciado() (a UI faz o botão de som piscar).
  * - Arquivo inexistente ou inválido = silêncio, sem quebrar o app.
  */
 
+import { SOUNDBOARD } from './state.js';
+
 // ============================================================================
-// Mapa de sons (caminhos relativos ao index.html)
+// Sons automáticos (evento → arquivo; caminhos relativos ao index.html)
+// Para tirar o som de um evento, basta remover a linha.
 // ============================================================================
-export const SONS = {
-  egg: 'sounds/egg.mp3',
+export const SONS_AUTOMATICOS = {
+  consensus: 'sounds/consensus.mp3',   // todos os votos iguais
+  divergence: 'sounds/reveal.mp3',     // todos os votos diferentes
+  newround: 'sounds/newround.mp3',     // nova votação
+  join: 'sounds/join.mp3',             // alguém entrou na sala
+  // Arremessos (os 6 itens principais)
   paper: 'sounds/paper.mp3',
   plane: 'sounds/plane.mp3',
+  egg: 'sounds/egg.mp3',
   heart: 'sounds/heart.mp3',
   dart: 'sounds/dart.mp3',
   emoji: 'sounds/emoji.mp3',
-  reveal: 'sounds/reveal.mp3',
-  vote: 'sounds/vote.mp3',
-  join: 'sounds/join.mp3',
-  newround: 'sounds/newround.mp3',
-  consensus: 'sounds/consensus.mp3',
 };
 
-/** Duração máxima (em segundos) de cada som; o resto é cortado com fade-out. */
+/** Todos os sons conhecidos: automáticos + soundboard (configurada em js/state.js). */
+export const SONS = {
+  ...SONS_AUTOMATICOS,
+  ...Object.fromEntries(SOUNDBOARD.map((s) => [s.id, s.arquivo])),
+};
+
+/** Duração máxima (em segundos); o que passar é cortado com fade-out. */
 export const DURACAO_MAXIMA = {
-  padrao: 2.5,
-  reveal: 3,
-  consensus: 4,
+  automatico: 3,
+  soundboard: 5,
 };
 const FADE_OUT_S = 0.35;
 /** Pico alvo da normalização (0–1) e ganho máximo aplicado a arquivos baixos. */
@@ -45,16 +55,18 @@ const MUDO_PADRAO = true;
 const VOLUME_PADRAO = 0.6;
 const EVENTOS_DE_INTERACAO = ['pointerdown', 'pointerup', 'click', 'keydown', 'touchend'];
 
+const IDS_SOUNDBOARD = new Set(SOUNDBOARD.map((s) => s.id));
+
 let ctx = null;
 let master = null;
 let iniciado = false;
 let mudo = MUDO_PADRAO;
 let volume = VOLUME_PADRAO;
-/** nome → { buffer: AudioBuffer, ganho: number } */
+/** url → { buffer: AudioBuffer, ganho: number } */
 const buffers = new Map();
-/** nome → ArrayBuffer baixado, aguardando o AudioContext existir */
+/** url → ArrayBuffer baixado, aguardando o AudioContext existir */
 const pendentes = new Map();
-/** sons cujo arquivo existe (para não "piscar" por som inexistente) */
+/** urls cujo arquivo existe (para não "piscar" por som inexistente) */
 const disponiveis = new Set();
 const ouvintesSilenciados = new Set();
 
@@ -66,7 +78,7 @@ function lsSet(chave, valor) {
 }
 
 export function duracaoMaxima(nome) {
-  return DURACAO_MAXIMA[nome] ?? DURACAO_MAXIMA.padrao;
+  return IDS_SOUNDBOARD.has(nome) ? DURACAO_MAXIMA.soundboard : DURACAO_MAXIMA.automatico;
 }
 
 /** Ganho que leva o pico do arquivo até PICO_ALVO. */
@@ -91,14 +103,14 @@ export function init() {
   const v = parseFloat(lsGet(LS_VOLUME));
   volume = Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : VOLUME_PADRAO;
 
-  // Pré-carrega os bytes (fetch não depende de interação do usuário)
-  for (const [nome, url] of Object.entries(SONS)) {
+  // Pré-carrega os bytes de cada arquivo uma única vez (fetch não depende de interação)
+  for (const url of new Set(Object.values(SONS))) {
     fetch(url)
       .then((r) => (r.ok ? r.arrayBuffer() : null))
       .then((buf) => {
         if (!buf) return;
-        disponiveis.add(nome);
-        pendentes.set(nome, buf);
+        disponiveis.add(url);
+        pendentes.set(url, buf);
         if (ctx) decodificarPendentes();
       })
       .catch(() => { /* arquivo ausente: falha silenciosa */ });
@@ -134,15 +146,15 @@ function criarContexto() {
 }
 
 function decodificarPendentes() {
-  for (const [nome, buf] of pendentes) {
-    pendentes.delete(nome);
+  for (const [url, buf] of pendentes) {
+    pendentes.delete(url);
     new Promise((resolve, reject) => {
       // Suporta a API com Promise e a antiga com callbacks (Safari antigo)
       const p = ctx.decodeAudioData(buf, resolve, reject);
       if (p && typeof p.then === 'function') p.then(resolve, reject);
     })
-      .then((audio) => buffers.set(nome, { buffer: audio, ganho: ganhoDeNormalizacao(audio) }))
-      .catch(() => { disponiveis.delete(nome); });
+      .then((audio) => buffers.set(url, { buffer: audio, ganho: ganhoDeNormalizacao(audio) }))
+      .catch(() => { disponiveis.delete(url); });
   }
 }
 
@@ -151,11 +163,12 @@ export function onSomSilenciado(fn) {
   ouvintesSilenciados.add(fn);
 }
 
-/** Toca um som pelo nome do mapa SONS. Nunca lança erro. */
+/** Toca um som pelo nome (chave de SONS). Nunca lança erro. */
 export function play(nome) {
-  if (!nome) return;
+  const url = nome ? SONS[nome] : null;
+  if (!url) return;
   if (mudo) {
-    if (disponiveis.has(nome)) {
+    if (disponiveis.has(url)) {
       for (const fn of ouvintesSilenciados) {
         try { fn(nome); } catch { /* ignora */ }
       }
@@ -163,7 +176,7 @@ export function play(nome) {
     return;
   }
   if (!ctx || ctx.state !== 'running') return;
-  const item = buffers.get(nome);
+  const item = buffers.get(url);
   if (!item) return;
   try {
     const src = ctx.createBufferSource();

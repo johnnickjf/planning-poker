@@ -251,6 +251,10 @@
           <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg>
           <span class="btn-label">Copiar link</span>
         </button>
+        <button id="btn-board" type="button" class="btn btn-ghost btn-sm" aria-haspopup="dialog" aria-expanded="false" aria-controls="board-menu">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+          <span class="btn-label">Sons</span>
+        </button>
         <button id="btn-clear" type="button" class="btn btn-ghost btn-icon" aria-label="Limpar efeitos da tela" title="Limpar efeitos da tela">
           <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
         </button>
@@ -303,6 +307,16 @@
       <button type="submit" class="btn btn-primary btn-sm">Jogar</button>
     </form>
     <p id="custom-emoji-error" class="field-error" aria-live="polite"></p>
+  </div>
+
+  <!-- ===================== Soundboard ===================== -->
+  <div id="board-menu" class="throw-menu board-menu" role="dialog" aria-labelledby="board-title" hidden>
+    <div class="throw-head">
+      <h2 id="board-title">Soundboard</h2>
+      <button id="board-close" type="button" class="btn btn-ghost btn-icon btn-xs" aria-label="Fechar">✕</button>
+    </div>
+    <p class="board-hint">// clique pra tocar pra sala inteira</p>
+    <div id="board-items" class="throw-grid board-grid"></div>
   </div>
 
   <!-- Camadas de efeitos -->

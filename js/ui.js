@@ -10,6 +10,8 @@ import {
   ITENS_ARREMESSO,
   EMOJIS_RAPIDOS,
   LIMITE_ARREMESSOS,
+  SOUNDBOARD,
+  LIMITE_SOUNDBOARD,
   MAX_NOME,
   MAX_NOME_SALA,
   SOMENTE_HOST_CONTROLA,
@@ -46,6 +48,7 @@ const playerEls = new Map();   // seatId → referências dos elementos do jogad
 const activeAnims = new Set();
 let meusArremessos = [];       // aviso local de rate limit
 let piscarSomTimer = null;
+let meusSons = [];             // aviso local de rate limit da soundboard
 let dicaSomMostrada = false;
 
 /** Cria um elemento com propriedades seguras. Filhos string viram nós de texto. */
@@ -106,8 +109,9 @@ export function init(h) {
 
   buildDeck();
   buildThrowMenu();
+  buildSoundboard();
   updateSoundUI();
-  window.addEventListener('resize', () => closeThrowMenu());
+  window.addEventListener('resize', () => { closeThrowMenu(); closeSoundboard(); });
 }
 
 // ============================================================================
@@ -118,6 +122,7 @@ const TELAS = ['loading', 'landing', 'home', 'join', 'message', 'room'];
 
 function showScreen(nome) {
   closeThrowMenu();
+  closeSoundboard();
   const mudou = $(`screen-${nome}`).hidden;
   for (const t of TELAS) $(`screen-${t}`).hidden = t !== nome;
   if (mudou) window.scrollTo(0, 0);
@@ -398,6 +403,7 @@ function statsNodes(stats) {
 
   const nos = [];
   if (stats.consensus) nos.push(el('p', { class: 'consensus-badge', text: '🎉 Consenso!' }));
+  else if (stats.allDifferent) nos.push(el('p', { class: 'consensus-badge divergence-badge', text: '🤯 Ninguém concordou!' }));
   nos.push(el('div', { class: 'stats' },
     stat('Média', fmtNum(stats.average)),
     stat('Mediana', fmtNum(stats.median)),
@@ -548,25 +554,30 @@ function openThrowMenu(alvoId, ancora) {
   $('custom-emoji').value = '';
   $('custom-emoji-error').textContent = '';
 
+  closeSoundboard(false);
   const menu = $('throw-menu');
   menu.hidden = false;
+  posicionarPopover(menu, ancora);
+  menu.querySelector('.throw-item')?.focus();
+}
+
+/** Posiciona um popover perto da âncora (no celular vira "bottom sheet" via CSS). */
+function posicionarPopover(menu, ancora) {
   if (window.matchMedia('(max-width: 560px)').matches) {
-    // No celular vira um "bottom sheet" (posição definida no CSS)
     menu.style.left = '';
     menu.style.top = '';
-  } else {
-    const r = ancora.getBoundingClientRect();
-    const mw = menu.offsetWidth;
-    const mh = menu.offsetHeight;
-    let left = r.left + r.width / 2 - mw / 2;
-    left = Math.max(8, Math.min(left, window.innerWidth - mw - 8));
-    let top = r.bottom + 10;
-    if (top + mh > window.innerHeight - 8) top = r.top - mh - 10;
-    top = Math.max(8, top);
-    menu.style.left = `${left}px`;
-    menu.style.top = `${top}px`;
+    return;
   }
-  menu.querySelector('.throw-item')?.focus();
+  const r = ancora.getBoundingClientRect();
+  const mw = menu.offsetWidth;
+  const mh = menu.offsetHeight;
+  let left = r.left + r.width / 2 - mw / 2;
+  left = Math.max(8, Math.min(left, window.innerWidth - mw - 8));
+  let top = r.bottom + 10;
+  if (top + mh > window.innerHeight - 8) top = r.top - mh - 10;
+  top = Math.max(8, top);
+  menu.style.left = `${left}px`;
+  menu.style.top = `${top}px`;
 }
 
 function closeThrowMenu(devolverFoco = true) {
@@ -592,6 +603,90 @@ function doThrow(item, emoji) {
   meusArremessos.push(agora);
   handlers.onThrow?.({ toId: menuTargetId, item, emoji });
   closeThrowMenu();
+}
+
+// ============================================================================
+// Soundboard (sons que tocam para a sala inteira)
+// ============================================================================
+
+function buildSoundboard() {
+  const grade = $('board-items');
+  for (const som of SOUNDBOARD) {
+    grade.append(el('button', {
+      type: 'button',
+      class: 'throw-item board-item',
+      dataset: { som: som.id },
+      'aria-label': `Tocar ${som.rotulo} para todos`,
+      onclick: () => tocarParaTodos(som.id),
+    },
+    el('span', { class: 'throw-emo', 'aria-hidden': 'true', text: som.emoji }),
+    el('span', { text: som.rotulo })));
+  }
+  $('btn-board').addEventListener('click', () => {
+    if ($('board-menu').hidden) openSoundboard();
+    else closeSoundboard();
+  });
+  $('board-close').addEventListener('click', () => closeSoundboard());
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !$('board-menu').hidden) {
+      e.preventDefault();
+      closeSoundboard();
+    }
+  });
+  document.addEventListener('pointerdown', (e) => {
+    const menu = $('board-menu');
+    if (menu.hidden || menu.contains(e.target) || $('btn-board').contains(e.target)) return;
+    closeSoundboard(false);
+  }, true);
+}
+
+function openSoundboard() {
+  closeThrowMenu(false);
+  const menu = $('board-menu');
+  menu.hidden = false;
+  $('btn-board').setAttribute('aria-expanded', 'true');
+  posicionarPopover(menu, $('btn-board'));
+  menu.querySelector('.board-item')?.focus();
+}
+
+function closeSoundboard(devolverFoco = true) {
+  const menu = $('board-menu');
+  if (menu.hidden) return;
+  const tinhaFoco = menu.contains(document.activeElement);
+  menu.hidden = true;
+  $('btn-board').setAttribute('aria-expanded', 'false');
+  if (devolverFoco && tinhaFoco) $('btn-board').focus();
+}
+
+function tocarParaTodos(id) {
+  // Aviso local do rate limit (o host é quem realmente aplica)
+  const agora = Date.now();
+  meusSons = meusSons.filter((t) => agora - t < LIMITE_SOUNDBOARD.janelaMs);
+  if (meusSons.length >= LIMITE_SOUNDBOARD.max) {
+    toast('Segura a emoção! Espere uns segundinhos 🎧');
+    return;
+  }
+  meusSons.push(agora);
+  handlers.onSoundboard?.(id);
+}
+
+/** Som da soundboard chegou: balão com o emoji em cima de quem tocou + destaque no botão. */
+export function mostrarSomTocado(msg) {
+  const som = SOUNDBOARD.find((s) => s.id === msg?.id);
+  if (!som || $('screen-room').hidden) return;
+
+  const botao = $('board-items').querySelector(`[data-som="${som.id}"]`);
+  if (botao) {
+    botao.classList.remove('is-playing');
+    void botao.offsetWidth;
+    botao.classList.add('is-playing');
+  }
+
+  const refs = playerEls.get(msg.fromId);
+  if (!refs || document.hidden) return;
+  const balao = el('span', { class: 'sound-bubble', 'aria-hidden': 'true', text: som.emoji });
+  refs.root.append(balao);
+  setTimeout(() => balao.remove(), 1800);
 }
 
 // ============================================================================
@@ -678,12 +773,14 @@ export function animateThrow(msg) {
   const reduzido = movimentoReduzido();
   const { quadros, duracao, anguloFinal, sentido } = trajetoria(s, e, cfg, reduzido);
 
-  if (cfg.somNo === 'lancamento') sound.play(cfg.som);
+  // Só os 6 itens principais têm som (emojis do seletor/livres voam em silêncio)
+  const comSom = !cfg.livre || simbolo === cfg.emoji;
+  if (comSom && cfg.somNo === 'lancamento') sound.play(cfg.som);
   const proj = noFx(s, simbolo);
   animar(proj, quadros, { duration: duracao, easing: 'linear', fill: 'forwards' }, () => {
     const refs = playerEls.get(msg.toId);
     if (!refs) return;
-    if (cfg.somNo === 'impacto') sound.play(cfg.som);
+    if (comSom && cfg.somNo === 'impacto') sound.play(cfg.som);
     impacto(cfg, refs, centro(refs.card), simbolo, { anguloFinal, sentido, reduzido });
   });
 }

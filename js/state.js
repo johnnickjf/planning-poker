@@ -52,6 +52,38 @@ export const EMOJIS_RAPIDOS = ['😂', '😍', '😎', '🤔', '😱', '🥳', '
 /** Rate limit de arremessos (aplicado pelo host; a UI só avisa). */
 export const LIMITE_ARREMESSOS = { max: 5, janelaMs: 5000 };
 
+/**
+ * Soundboard: sons que qualquer pessoa toca para a sala inteira.
+ * Para adicionar um som, coloque o MP3 em sounds/soundboard/ e inclua uma linha aqui
+ * (o `id` precisa ser único; `rotulo` e `emoji` são o que aparece no botão).
+ */
+export const SOUNDBOARD = [
+  // Sons que também são usados automaticamente
+  { id: 'sb-consenso', arquivo: 'sounds/consensus.mp3', rotulo: 'Consenso', emoji: '🎉' },
+  { id: 'sb-revelacao', arquivo: 'sounds/reveal.mp3', rotulo: 'Revelação', emoji: '🥁' },
+  { id: 'sb-rodada', arquivo: 'sounds/newround.mp3', rotulo: 'Nova rodada', emoji: '🔄' },
+  { id: 'sb-chegada', arquivo: 'sounds/join.mp3', rotulo: 'Chegada', emoji: '👋' },
+  { id: 'sb-voto', arquivo: 'sounds/vote.mp3', rotulo: 'Voto', emoji: '🗳️' },
+  { id: 'sb-ovo', arquivo: 'sounds/egg.mp3', rotulo: 'Ovo', emoji: '🥚' },
+  { id: 'sb-papel', arquivo: 'sounds/paper.mp3', rotulo: 'Papel', emoji: '📄' },
+  { id: 'sb-aviao', arquivo: 'sounds/plane.mp3', rotulo: 'Avião', emoji: '✈️' },
+  { id: 'sb-coracao', arquivo: 'sounds/heart.mp3', rotulo: 'Coração', emoji: '❤️' },
+  { id: 'sb-dardo', arquivo: 'sounds/dart.mp3', rotulo: 'Dardo', emoji: '🎯' },
+  { id: 'sb-emoji', arquivo: 'sounds/emoji.mp3', rotulo: 'Emoji', emoji: '😀' },
+  // Sons exclusivos da soundboard
+  { id: 'sb01', arquivo: 'sounds/soundboard/01.mp3', rotulo: 'Som 1', emoji: '🎵' },
+  { id: 'sb02', arquivo: 'sounds/soundboard/02.mp3', rotulo: 'Som 2', emoji: '🎶' },
+  { id: 'sb03', arquivo: 'sounds/soundboard/03.mp3', rotulo: 'Som 3', emoji: '🎺' },
+  { id: 'sb04', arquivo: 'sounds/soundboard/04.mp3', rotulo: 'Som 4', emoji: '💥' },
+  { id: 'sb05', arquivo: 'sounds/soundboard/05.mp3', rotulo: 'Som 5', emoji: '🔔' },
+  { id: 'sb06', arquivo: 'sounds/soundboard/06.mp3', rotulo: 'Som 6', emoji: '📯' },
+  { id: 'sb07', arquivo: 'sounds/soundboard/07.mp3', rotulo: 'Som 7', emoji: '🎸' },
+  { id: 'sb08', arquivo: 'sounds/soundboard/08.mp3', rotulo: 'Som 8', emoji: '🎹' },
+];
+
+/** Rate limit da soundboard (por pessoa). */
+export const LIMITE_SOUNDBOARD = { max: 3, janelaMs: 6000 };
+
 // ============================================================================
 // Utilitários
 // ============================================================================
@@ -125,6 +157,7 @@ export function computeStats(votos) {
   if (freq.size > 1 && mode.length === freq.size) mode = [];
 
   const consensus = votos.length >= 2 && votos.every((v) => v === votos[0]);
+  const allDifferent = votos.length >= 2 && new Set(votos).size === votos.length;
   const temExtremos = n >= 2 && numericos[0] !== numericos[n - 1];
 
   return {
@@ -133,6 +166,7 @@ export function computeStats(votos) {
     median,
     mode,
     consensus,
+    allDifferent,
     // Strings, para comparar diretamente com os votos ('3' === '3')
     min: temExtremos ? String(numericos[0]) : null,
     max: temExtremos ? String(numericos[n - 1]) : null,

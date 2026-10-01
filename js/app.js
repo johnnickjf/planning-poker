@@ -347,6 +347,11 @@ function vincularSessao(s) {
   s.on('throw', (msg) => {
     if (session === s && roomVisible) ui.animateThrow(msg);
   });
+  s.on('sound', (msg) => {
+    if (session !== s || !roomVisible) return;
+    sound.play(msg.id);
+    ui.mostrarSomTocado(msg);
+  });
   s.on('banner', (texto) => {
     if (session === s) ui.setBanner(texto);
   });
@@ -370,6 +375,7 @@ function vincularSessao(s) {
 function tratarEvento(ev) {
   const nome = typeof ev.name === 'string' ? sanitizeText(ev.name, MAX_NOME + 6) : '';
   const souEu = ev.id && ev.id === lastState?.selfId;
+  // Sons automáticos só em: entrada, nova votação, consenso, todos diferentes e arremessos (ui.js)
   switch (ev.kind) {
     case 'join':
       sound.play('join');
@@ -377,12 +383,6 @@ function tratarEvento(ev) {
       break;
     case 'leave':
       if (nome) ui.toast(`${nome} saiu da sala`);
-      break;
-    case 'vote':
-      sound.play('vote');
-      break;
-    case 'reveal':
-      sound.play('reveal');
       break;
     case 'newRound':
       sound.play('newround');
@@ -392,6 +392,11 @@ function tratarEvento(ev) {
         if (!roomVisible) return;
         sound.play('consensus');
         ui.celebrate();
+      }, ATRASO_CONFETE_MS);
+      break;
+    case 'divergence':
+      setTimeout(() => {
+        if (roomVisible) sound.play('divergence');
       }, ATRASO_CONFETE_MS);
       break;
     default:
@@ -478,6 +483,7 @@ function init() {
     onReveal: () => session?.send({ type: 'reveal' }),
     onNewRound: () => session?.send({ type: 'newRound' }),
     onThrow: ({ toId, item, emoji }) => session?.send(emoji ? { type: 'throw', toId, item, emoji } : { type: 'throw', toId, item }),
+    onSoundboard: (id) => session?.send({ type: 'sound', id }),
     onLeave: sair,
   });
 

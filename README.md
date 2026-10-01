@@ -10,7 +10,8 @@ na memória dos navegadores e a comunicação é **P2P via WebRTC** usando [Peer
   moda e consenso (com confete 🎉).
 - Clique na carta de um colega para arremessar papelzinho, aviãozinho, ovo, coração, dardo ou
   qualquer emoji.
-- Efeitos sonoros locais, com botão de mudo e volume.
+- Efeitos sonoros locais (começam mudos; o botão pisca quando algo toca) e uma **soundboard**
+  para tocar sons para a sala inteira.
 
 ---
 
@@ -52,8 +53,8 @@ Mensagens JSON com campo `type`. A documentação completa está no topo de `js/
 
 | Direção         | Tipos                                                                   |
 |-----------------|-------------------------------------------------------------------------|
-| cliente → host  | `info`, `hello`, `vote`, `clearVote`, `reveal`, `newRound`, `throw`, `leave`, `ping` |
-| host → cliente  | `info`, `welcome`, `state`, `event`, `throw`, `reject`, `roomClosed`, `hostLeaving`, `ping` |
+| cliente → host  | `info`, `hello`, `vote`, `clearVote`, `reveal`, `newRound`, `throw`, `sound`, `leave`, `ping` |
+| host → cliente  | `info`, `welcome`, `state`, `event`, `throw`, `sound`, `reject`, `roomClosed`, `hostLeaving`, `ping` |
 
 O host é a única fonte de verdade e ignora mensagens inválidas (tipo desconhecido, mais de 1 KB,
 jogador inexistente, valor fora do baralho, item desconhecido etc.).

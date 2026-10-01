@@ -16,6 +16,7 @@
  *   reveal     {}                        Revela os votos.
  *   newRound   {}                        Limpa os votos e volta ao estado "votando".
  *   throw      { toId, item, emoji? }    Arremessa um item em outro jogador (fromId é definido pelo host).
+ *   sound      { id }                    Toca um som da SOUNDBOARD para a sala inteira.
  *   leave      {}                        Sai na hora (sem tolerância de reconexão).
  *   ping       {}                        Heartbeat.
  *
@@ -24,8 +25,9 @@
  *   welcome    { state }                 Resposta ao hello (o estado inclui selfId e myVote).
  *   state      { state }                 Estado completo sanitizado (sem valores de voto antes da revelação).
  *   event      { kind, id?, name? }      Evento para efeitos locais (som/toast):
- *                                        join | leave | vote | reveal | newRound | consensus
+ *                                        join | leave | vote | reveal | newRound | consensus | divergence
  *   throw      { id, fromId, toId, item, emoji? }   Arremesso validado; todos animam ao mesmo tempo.
+ *   sound      { id, fromId }            Som da soundboard validado; cada navegador toca localmente.
  *   reject     { reason }                full | invalid | duplicate | busy
  *   roomClosed { reason }                O host encerrou a sala.
  *   hostLeaving {}                       A aba do host está fechando/recarregando: o cliente tenta
@@ -44,6 +46,8 @@ import {
   SOMENTE_HOST_CONTROLA,
   ITENS_ARREMESSO,
   LIMITE_ARREMESSOS,
+  SOUNDBOARD,
+  LIMITE_SOUNDBOARD,
   REGEX_PLAYER_ID,
   sanitizeText,
   sanitizeEmoji,
@@ -157,7 +161,7 @@ function enviar(conn, msg) {
 // ============================================================================
 
 /**
- * Eventos emitidos: state(publicState), event(msg), throw(msg), banner(texto|null)
+ * Eventos emitidos: state(publicState), event(msg), throw(msg), sound(msg), banner(texto|null)
  */
 export class HostSession extends Emitter {
   constructor({ roomId, roomName, playerId, name }) {
@@ -175,6 +179,7 @@ export class HostSession extends Emitter {
     this.byPlayer = new Map();
     this.removalTimers = new Map();
     this.throwLog = new Map();
+    this.soundLog = new Map();
     this.closed = false;
     this.heartbeat = null;
     this.serverRetry = null;
@@ -324,6 +329,7 @@ export class HostSession extends Emitter {
     this.removalTimers.delete(pid);
     this.room.removePlayer(pid);
     this.throwLog.delete(pid);
+    this.soundLog.delete(pid);
     this._broadcastState();
     this._broadcast({ type: 'event', kind: 'leave', id: p.seatId, name: p.name });
   }
@@ -435,7 +441,9 @@ export class HostSession extends Emitter {
         if (podeControlar && this.room.reveal()) {
           this._broadcastState();
           this._broadcast({ type: 'event', kind: 'reveal' });
-          if (this.room.stats().consensus) this._broadcast({ type: 'event', kind: 'consensus' });
+          const stats = this.room.stats();
+          if (stats.consensus) this._broadcast({ type: 'event', kind: 'consensus' });
+          else if (stats.allDifferent) this._broadcast({ type: 'event', kind: 'divergence' });
         }
         break;
       case 'newRound':
@@ -446,6 +454,9 @@ export class HostSession extends Emitter {
         break;
       case 'throw':
         this._onThrow(p, msg);
+        break;
+      case 'sound':
+        this._onSound(p, msg);
         break;
       default:
         break; // tipo desconhecido: ignora
@@ -474,6 +485,20 @@ export class HostSession extends Emitter {
     this._broadcast(out);
   }
 
+  _onSound(de, msg) {
+    const som = SOUNDBOARD.find((s) => s.id === msg.id);
+    if (!som) return;
+    const agora = Date.now();
+    const log = (this.soundLog.get(de.playerId) || []).filter((t) => agora - t < LIMITE_SOUNDBOARD.janelaMs);
+    if (log.length >= LIMITE_SOUNDBOARD.max) {
+      this.soundLog.set(de.playerId, log);
+      return;
+    }
+    log.push(agora);
+    this.soundLog.set(de.playerId, log);
+    this._broadcast({ type: 'sound', id: som.id, fromId: de.seatId });
+  }
+
   // ---- envio -----------------------------------------------------------
 
   /** Envia o estado personalizado para cada jogador (cada um recebe só o próprio voto). */
@@ -487,6 +512,7 @@ export class HostSession extends Emitter {
     for (const rec of this.byPlayer.values()) enviar(rec.conn, msg);
     if (msg.type === 'event') this.emit('event', msg);
     else if (msg.type === 'throw') this.emit('throw', msg);
+    else if (msg.type === 'sound') this.emit('sound', msg);
   }
 
   _startHeartbeat() {
@@ -511,7 +537,7 @@ export class HostSession extends Emitter {
 // ============================================================================
 
 /**
- * Eventos emitidos: state(publicState), event(msg), throw(msg),
+ * Eventos emitidos: state(publicState), event(msg), throw(msg), sound(msg),
  * reconnecting(), reconnected(), closed(reason: 'hostLeft' | 'full')
  */
 export class ClientSession extends Emitter {
@@ -695,6 +721,9 @@ export class ClientSession extends Emitter {
         break;
       case 'throw':
         this.emit('throw', msg);
+        break;
+      case 'sound':
+        this.emit('sound', msg);
         break;
       case 'roomClosed':
         this._fail('hostLeft');
